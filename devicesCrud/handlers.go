@@ -135,3 +135,25 @@ func DeleteDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Reque
 		w.Write([]byte("You updated device"))
 	}
 }
+
+// GetDeviceHandler returns an array of Device objects as seen in models to the client
+func GetDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		// return array of all devices
+		w.Header().Set("Content-Type", "application/json")
+		devices, err := GetDevices(db)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("error: could not fetch devices"))
+		}
+		// encode the array and return as json
+		encoder := json.NewEncoder(w)
+		err = encoder.Encode(devices)
+		if err != nil {
+			http.Error(w, "error: internal server error", http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+	}
+}

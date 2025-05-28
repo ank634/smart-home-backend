@@ -38,6 +38,7 @@ func main() {
 	http.HandleFunc("POST /iot-devices", devicesCrud.AddDeviceHandler(db))
 	http.HandleFunc("POST /iot-devices/{id}", devicesCrud.EditDeviceHandler(db))
 	http.HandleFunc("DELETE /iot-devices/{id}", devicesCrud.DeleteDeviceHandler(db))
+	http.HandleFunc("GET /iot-devices", devicesCrud.GetDeviceHandler(db))
 
 	// listen and serv on port 8080
 	// uses default standard lib router for

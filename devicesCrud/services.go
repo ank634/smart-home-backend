@@ -24,8 +24,6 @@ func AddDevice(db *sql.DB, device SmartHomeDevice) error {
 	return err
 }
 
-// RemoveDevice removes a iot device to our home automation system returns true if succesfully removed
-
 // todo add mdns device check maybe a ping
 // todo maybe pass values or interface instead of struct
 func DeleteDevice(db *sql.DB, device SmartHomeDevicePatch) (bool, error) {
@@ -60,4 +58,26 @@ func EditDevice(db *sql.DB, deviceId string, device SmartHomeDevicePatch) (bool,
 		return false, err
 	}
 	return rowsAffected > 0, nil
+}
+
+func GetDevices(db *sql.DB) ([]SmartHomeDevice, error) {
+	query := "SELECT * FROM iotdevice"
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	var devices []SmartHomeDevice
+	defer rows.Close()
+	for rows.Next() {
+		var tempDevice SmartHomeDevice
+		err = rows.Scan(&tempDevice.DeviceID, &tempDevice.DeviceName,
+			&tempDevice.DeviceType, &tempDevice.SetTopic,
+			&tempDevice.GetTopic, &tempDevice.DeviceUrl)
+
+		if err != nil {
+			return nil, err
+		}
+		devices = append(devices, tempDevice)
+	}
+	return devices, nil
 }
