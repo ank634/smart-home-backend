@@ -105,23 +105,15 @@ func DeleteDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Reque
 	return func(w http.ResponseWriter, req *http.Request) {
 		defer req.Body.Close()
 		deviceId := req.PathValue("id")
-		decoder := json.NewDecoder(req.Body)
-		decoder.DisallowUnknownFields()
 
 		var newDevice SmartHomeDevicePatch
-		err := decoder.Decode(&newDevice)
-		if err != nil {
-			http.Error(w, "Improper parameters", 400)
-			return
-		}
 
 		if deviceId == "" {
 			http.Error(w, "Missing fields", 400)
 			return
 		}
 
-		var deviceDeleted bool
-		deviceDeleted, err = DeleteDevice(db, newDevice)
+		deviceDeleted, err := DeleteDevice(db, newDevice)
 		if err != nil {
 			http.Error(w, "internal service error", 500)
 			return

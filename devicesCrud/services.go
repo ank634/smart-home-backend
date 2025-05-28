@@ -66,7 +66,7 @@ func GetDevices(db *sql.DB) ([]SmartHomeDevice, error) {
 	if err != nil {
 		return nil, err
 	}
-	var devices []SmartHomeDevice
+	var devices []SmartHomeDevice = []SmartHomeDevice{}
 	defer rows.Close()
 	for rows.Next() {
 		var tempDevice SmartHomeDevice
