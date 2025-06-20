@@ -6,4 +6,4 @@ import (
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
-// Ill come back to you later I just want to get it working first!!
+// TODO: Read how this works and implement it

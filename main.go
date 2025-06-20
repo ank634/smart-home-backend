@@ -34,7 +34,7 @@ func main() {
 	}
 
 	//////////////////////// HANDLERS //////////////////////////
-	// NOTE: DON'T use patch it hangs
+	// NOTE: DON'T use patch request hangs
 	http.HandleFunc("POST /iot-devices", devicesCrud.AddDeviceHandler(db))
 	http.HandleFunc("POST /iot-devices/{id}", devicesCrud.EditDeviceHandler(db))
 	http.HandleFunc("DELETE /iot-devices/{id}", devicesCrud.DeleteDeviceHandler(db))
@@ -46,4 +46,5 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not start server")
 	}
+	log.Default().Println("Server started")
 }

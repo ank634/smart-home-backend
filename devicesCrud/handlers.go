@@ -29,6 +29,7 @@ func AddDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Request)
 		if newDevice.DeviceID == "" ||
 			newDevice.DeviceName == "" ||
 			newDevice.DeviceType == "" ||
+			newDevice.ServiceType == "" ||
 			newDevice.DeviceUrl == "" ||
 			newDevice.GetTopic == "" ||
 			newDevice.SetTopic == "" {
@@ -135,17 +136,18 @@ func GetDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Request)
 		w.Header().Set("Content-Type", "application/json")
 		devices, err := GetDevices(db)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, "error: internal server error", http.StatusInternalServerError)
 			w.Write([]byte("error: could not fetch devices"))
+			return
 		}
-		// encode the array and return as json
+
 		encoder := json.NewEncoder(w)
+		// if encode is sucessful it writes to the writer
 		err = encoder.Encode(devices)
 		if err != nil {
 			http.Error(w, "error: internal server error", http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
 	}
 }
