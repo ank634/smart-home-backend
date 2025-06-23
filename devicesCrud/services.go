@@ -61,7 +61,7 @@ func EditDevice(db *sql.DB, deviceId string, device SmartHomeDevicePatch) (bool,
 	return rowsAffected > 0, nil
 }
 
-func GetDevices(db *sql.DB) ([]SmartHomeDevice, error) {
+func GetAllDevices(db *sql.DB) ([]SmartHomeDevice, error) {
 	query := "SELECT * FROM device"
 	rows, err := db.Query(query)
 	if err != nil {
@@ -70,6 +70,31 @@ func GetDevices(db *sql.DB) ([]SmartHomeDevice, error) {
 	// if you only do var devices []SmartHomeDevice it init to nil
 	// this init to empty array
 	var devices []SmartHomeDevice = []SmartHomeDevice{}
+	defer rows.Close()
+	for rows.Next() {
+		var tempDevice SmartHomeDevice
+		err = rows.Scan(&tempDevice.DeviceID, &tempDevice.DeviceName,
+			&tempDevice.DeviceType, &tempDevice.ServiceType,
+			&tempDevice.SetTopic, &tempDevice.GetTopic,
+			&tempDevice.DeviceUrl)
+
+		if err != nil {
+			return nil, err
+		}
+		devices = append(devices, tempDevice)
+	}
+	return devices, nil
+}
+
+func GetDevicesByServiceType(db *sql.DB, serviceType string) ([]SmartHomeDevice, error) {
+	query := "SELECT * FROM device WHERE servicetype = $1"
+	rows, err := db.Query(query, serviceType)
+	if err != nil {
+		return nil, err
+	}
+
+	var devices []SmartHomeDevice = []SmartHomeDevice{}
+
 	defer rows.Close()
 	for rows.Next() {
 		var tempDevice SmartHomeDevice

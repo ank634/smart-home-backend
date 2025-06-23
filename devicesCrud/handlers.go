@@ -132,15 +132,24 @@ func DeleteDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Reque
 // GetDeviceHandler returns an array of Device objects as seen in models to the client
 func GetDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
+		serviceType := req.URL.Query().Get("servicetype")
+		var devices []SmartHomeDevice
+		var err error
 		// return array of all devices
-		w.Header().Set("Content-Type", "application/json")
-		devices, err := GetDevices(db)
+		// TODO:maybe we should type casting to enums to secure proper service type
+		if serviceType == "" {
+			devices, err = GetDevicesByServiceType(db, serviceType)
+		} else {
+			devices, err = GetAllDevices(db)
+		}
+
 		if err != nil {
 			http.Error(w, "error: internal server error", http.StatusInternalServerError)
 			w.Write([]byte("error: could not fetch devices"))
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		encoder := json.NewEncoder(w)
 		// if encode is sucessful it writes to the writer
 		err = encoder.Encode(devices)
