@@ -4,8 +4,67 @@ package devicesCrud
 import (
 	"database/sql"
 
-	_ "github.com/lib/pq" // PostgreSQL driver
+	"github.com/lib/pq"
 )
+
+func AddLightDevice(db *sql.DB, light LightDevice) error {
+	insertionDeviceTableStatement := "INSERT INTO device(id, name, servicetype, devicetype, manufactor, settopic, gettopic, endpoint, room) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(insertionDeviceTableStatement, light.DeviceID, light.DeviceName,
+		light.ServiceType, light.DeviceType, light.Manufactor,
+		light.SetTopic, light.GetTopic, light.EndPoint,
+		light.RoomID)
+
+	// refactor me
+	if err != nil {
+		tx.Rollback()
+		err, ok := err.(*pq.Error)
+		if !ok {
+			return err
+		}
+		if err.Code == "23502" {
+			return ErrorNotNullViolation{"This value may not be null"}
+		}
+
+		if err.Code == "23505" {
+			return ErrorDuplicateData{"This value is not unique"}
+		}
+		if err.Code == "23514" {
+			return ErrorIllegalData{"Data value not allowed"}
+		}
+		return err
+	}
+
+	insertLightTableStatement := "Insert into light(id, dimmable, rgb) VALUES($1, $2, $3)"
+
+	_, err = tx.Exec(insertLightTableStatement, light.DeviceID, light.IsDimmable, light.IsRgb)
+	if err != nil {
+		tx.Rollback()
+		err, ok := err.(*pq.Error)
+		if !ok {
+			return err
+		}
+		if err.Code == "23502" {
+			return ErrorNotNullViolation{"This value may not be null"}
+		}
+
+		if err.Code == "23505" {
+			return ErrorDuplicateData{"This value is not unique"}
+		}
+		if err.Code == "23514" {
+			return ErrorIllegalData{"Data value not allowed"}
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	return err
+}
 
 // AddDevice adds a iot device to our home automation system
 // todo add mdns device check maybe a ping
