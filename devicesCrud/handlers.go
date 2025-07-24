@@ -136,17 +136,20 @@ func EditDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Request
 		defer req.Body.Close()
 		deviceId := req.PathValue("id")
 		decoder := json.NewDecoder(req.Body)
-		decoder.DisallowUnknownFields()
 
 		var newDevice SmartHomeDevicePatch
 		err := decoder.Decode(&newDevice)
 		if err != nil {
-			http.Error(w, "Improper parameters", 400)
+			http.Error(w, "internal service error", 500)
 			return
 		}
 
-		if deviceId == "" || newDevice.DeviceName == "" {
-			http.Error(w, "Missing fields", 400)
+		encoder := json.NewEncoder(w)
+		if strings.TrimSpace(deviceId) == "" || strings.TrimSpace(newDevice.DeviceName) == "" || strings.TrimSpace(newDevice.DeviceID) == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.ILLEGAL_VALUE_ERROR, Title: "No empty strings", Status: 400, Detail: "No empty strings"}
+			w.Header().Set("Content-Type", "application/problem+json")
+			encoder.Encode(httpProblemDetails)
 			return
 		}
 
@@ -175,8 +178,12 @@ func DeleteDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Reque
 
 		var newDevice SmartHomeDevicePatch
 
-		if deviceId == "" {
-			http.Error(w, "Missing fields", 400)
+		encoder := json.NewEncoder(w)
+		if strings.TrimSpace(deviceId) == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.ILLEGAL_VALUE_ERROR, Title: "No empty strings", Status: 400, Detail: "No empty strings"}
+			w.Header().Set("Content-Type", "application/problem+json")
+			encoder.Encode(httpProblemDetails)
 			return
 		}
 
