@@ -106,7 +106,7 @@ func DeleteDevice(db *sql.DB, device SmartHomeDevicePatch) (bool, error) {
 // EditDevice will attempt to edit the name of device. Will return true if sucessfuly updated
 // false if it does not exist in order to facilitate 404
 func EditDevice(db *sql.DB, deviceId string, device SmartHomeDevicePatch) (bool, error) {
-	query := "UPDATE device SET devicename = $1 WHERE deviceid = $2"
+	query := "UPDATE device SET name = $1 WHERE id = $2"
 	result, err := db.Exec(query, device.DeviceName, deviceId)
 	if err != nil {
 		return false, err
