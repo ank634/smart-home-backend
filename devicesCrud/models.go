@@ -8,7 +8,8 @@ type SmartHomeDevice struct {
 	Manufactor  *string
 	SetTopic    *string
 	GetTopic    *string
-	DeviceUrl   *string
+	EndPoint    *string
+	RoomID      *int
 }
 
 type LightDevice struct {

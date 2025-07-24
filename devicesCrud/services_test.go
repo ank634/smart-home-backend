@@ -213,6 +213,20 @@ func (suite *ServicesTestSuite) TestLightDeviceAddEmptyStrings() {
 	}
 }
 
+func (suite *ServicesTestSuite) TestFetchAllLights() {
+	light1 := newLightDevice("light1", "light1", "light",
+		"http._tcp", "custom", "set1", "get1", "light1.local", nil, false, false)
+	light2 := newLightDevice("light2", "light2", "light",
+		"http._tcp", "custom", "set2", "get2", "light2.local", nil, false, false)
+	err := AddLightDevice(suite.db, *light1)
+	assert.NoError(suite.T(), err)
+	err = AddLightDevice(suite.db, *light2)
+	assert.NoError(suite.T(), err)
+	lights, err := GetAllLightDevices(suite.db)
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), 2, len(lights))
+}
+
 // This is what runs the actual test in the suite
 func TestServicesTestSuite(t *testing.T) {
 	suite.Run(t, new(ServicesTestSuite))

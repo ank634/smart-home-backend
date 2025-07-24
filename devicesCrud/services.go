@@ -7,6 +7,7 @@ import (
 	"github.com/lib/pq"
 )
 
+// ///// LIGHT //////////////
 func AddLightDevice(db *sql.DB, light LightDevice) error {
 	insertionDeviceTableStatement := "INSERT INTO device(id, name, servicetype, devicetype, manufactor, settopic, gettopic, endpoint, room) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)"
 
@@ -66,6 +67,51 @@ func AddLightDevice(db *sql.DB, light LightDevice) error {
 	return err
 }
 
+func GetAllLightDevices(db *sql.DB) ([]LightDevice, error) {
+	query := `SELECT device.id, name, servicetype, devicetype,
+		manufactor, settopic, gettopic, endpoint, room, dimmable, rgb 
+		FROM DEVICE JOIN LIGHT 
+		ON device.id = light.id`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var lights []LightDevice
+
+	for rows.Next() {
+		var light LightDevice
+		var roomID sql.NullInt64
+
+		err := rows.Scan(
+			&light.DeviceID, &light.DeviceName, &light.ServiceType,
+			&light.DeviceType, &light.Manufactor, &light.SetTopic,
+			&light.GetTopic, &light.EndPoint, &roomID,
+			&light.IsDimmable, &light.IsRgb,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if roomID.Valid {
+			roomVal := int(roomID.Int64)
+			light.RoomID = &roomVal
+		}
+
+		lights = append(lights, light)
+	}
+
+	// Check for any error that occurred during iteration
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return lights, nil
+}
+
+// /// GENERIC ////////////////
 // todo add mdns device check maybe a ping
 // todo maybe pass values or interface instead of struct
 func DeleteDevice(db *sql.DB, id string) (bool, error) {
@@ -117,7 +163,7 @@ func GetAllDevices(db *sql.DB) ([]SmartHomeDevice, error) {
 		err = rows.Scan(&tempDevice.DeviceID, &tempDevice.DeviceName,
 			&tempDevice.DeviceType, &tempDevice.ServiceType,
 			&tempDevice.SetTopic, &tempDevice.GetTopic,
-			&tempDevice.DeviceUrl)
+			&tempDevice.EndPoint)
 
 		if err != nil {
 			return nil, err
@@ -142,7 +188,7 @@ func GetDevicesByServiceType(db *sql.DB, serviceType string) ([]SmartHomeDevice,
 		err = rows.Scan(&tempDevice.DeviceID, &tempDevice.DeviceName,
 			&tempDevice.DeviceType, &tempDevice.ServiceType,
 			&tempDevice.SetTopic, &tempDevice.GetTopic,
-			&tempDevice.DeviceUrl)
+			&tempDevice.EndPoint)
 
 		if err != nil {
 			return nil, err
