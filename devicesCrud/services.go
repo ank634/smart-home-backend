@@ -34,8 +34,8 @@ func AddLightDevice(db *sql.DB, light LightDevice) error {
 		if err.Code == "23505" {
 			return ErrorDuplicateData{"This value is not unique"}
 		}
-		if err.Code == "23514" {
-			return ErrorIllegalData{"Data value not allowed"}
+		if err.Code == "23514" || err.Code == "22P02" || err.Code == "23503" {
+			return ErrorIllegalData{err.Error()}
 		}
 		return err
 	}
@@ -68,10 +68,10 @@ func AddLightDevice(db *sql.DB, light LightDevice) error {
 
 // todo add mdns device check maybe a ping
 // todo maybe pass values or interface instead of struct
-func DeleteDevice(db *sql.DB, device SmartHomeDevicePatch) (bool, error) {
-	query := "DELETE FROM device WHERE DEVICEID = $1"
+func DeleteDevice(db *sql.DB, id string) (bool, error) {
+	query := "DELETE FROM device WHERE id = $1"
 	// TODO make this a transaction so all has to succeed-
-	result, err := db.Exec(query, device.DeviceID)
+	result, err := db.Exec(query, id)
 	if err != nil {
 		return false, err
 	}

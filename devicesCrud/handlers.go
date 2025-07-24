@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// DONE
 func AddLightDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		defer req.Body.Close()
@@ -28,7 +29,16 @@ func AddLightDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Req
 
 		err = AddLightDeviceValidator(newLightDevice)
 		if err != nil {
-			httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.ILLEGAL_VALUE_ERROR, Title: "title", Status: 400, Detail: "detail"}
+			var notNullErr ErrorNotNullViolation
+			if errors.As(err, &notNullErr) {
+				httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.NULL_NOT_ALLOWED_ERROR, Title: "title", Status: 400, Detail: err.Error()}
+				// header must be called before encode because w.write makes header 200 and encode calls w.write
+				w.Header().Set("Content-Type", "application/problem+json")
+				w.WriteHeader(http.StatusBadRequest)
+				encoder.Encode(httpProblemDetails)
+				return
+			}
+			httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.ILLEGAL_VALUE_ERROR, Title: "title", Status: 400, Detail: err.Error()}
 			// header must be called before encode because w.write makes header 200 and encode calls w.write
 			w.Header().Set("Content-Type", "application/problem+json")
 			w.WriteHeader(http.StatusBadRequest)
@@ -41,7 +51,7 @@ func AddLightDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Req
 			var notNullErr ErrorNotNullViolation
 			if errors.As(err, &notNullErr) {
 				w.WriteHeader(http.StatusBadRequest)
-				httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.NULL_NOT_ALLOWED_ERROR, Title: "No not null allowed", Status: 400, Detail: "No not null allowed"}
+				httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.NULL_NOT_ALLOWED_ERROR, Title: "No not null allowed", Status: 400, Detail: err.Error()}
 				w.Header().Set("Content-Type", "application/problem+json")
 				encoder.Encode(httpProblemDetails)
 				return
@@ -49,7 +59,7 @@ func AddLightDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Req
 			var illegalDataError ErrorIllegalData
 			if errors.As(err, &illegalDataError) {
 				w.WriteHeader(http.StatusBadRequest)
-				httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.ILLEGAL_VALUE_ERROR, Title: "No empty strings", Status: 400, Detail: "No empty strings"}
+				httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.ILLEGAL_VALUE_ERROR, Title: "No empty strings", Status: 400, Detail: err.Error()}
 				w.Header().Set("Content-Type", "application/problem+json")
 				encoder.Encode(httpProblemDetails)
 				return
@@ -57,7 +67,7 @@ func AddLightDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Req
 			var notUniqueError ErrorDuplicateData
 			if errors.As(err, &notUniqueError) {
 				w.WriteHeader(http.StatusBadRequest)
-				httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.NULL_NOT_ALLOWED_ERROR, Title: "Values must me unique", Status: 400, Detail: "Values must me unique"}
+				httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.NOT_UNIQUE_ERROR, Title: "Values must me unique", Status: 400, Detail: err.Error()}
 				w.Header().Set("Content-Type", "application/problem+json")
 				encoder.Encode(httpProblemDetails)
 				return
@@ -71,6 +81,7 @@ func AddLightDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Req
 	}
 }
 
+// Done
 func EditDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		defer req.Body.Close()
@@ -85,7 +96,7 @@ func EditDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Request
 		}
 
 		encoder := json.NewEncoder(w)
-		if strings.TrimSpace(deviceId) == "" || strings.TrimSpace(newDevice.DeviceName) == "" || strings.TrimSpace(newDevice.DeviceID) == "" {
+		if strings.TrimSpace(deviceId) == "" || strings.TrimSpace(newDevice.DeviceName) == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.ILLEGAL_VALUE_ERROR, Title: "No empty strings", Status: 400, Detail: "No empty strings"}
 			w.Header().Set("Content-Type", "application/problem+json")
@@ -111,12 +122,11 @@ func EditDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Request
 
 }
 
+// DONE
 func DeleteDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		defer req.Body.Close()
 		deviceId := req.PathValue("id")
-
-		var newDevice SmartHomeDevicePatch
 
 		encoder := json.NewEncoder(w)
 		if strings.TrimSpace(deviceId) == "" {
@@ -127,7 +137,7 @@ func DeleteDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Reque
 			return
 		}
 
-		deviceDeleted, err := DeleteDevice(db, newDevice)
+		deviceDeleted, err := DeleteDevice(db, deviceId)
 		if err != nil {
 			http.Error(w, "internal service error", 500)
 			return
@@ -186,7 +196,7 @@ func AddLightDeviceValidator(light LightDevice) error {
 		light.Manufactor == nil ||
 		light.ServiceType == nil ||
 		light.SetTopic == nil {
-		return ErrorIllegalData{fmt.Sprint("All fields except room number may not be nil")}
+		return ErrorNotNullViolation{fmt.Sprint("All fields except room number may not be nil")}
 	}
 
 	if strings.TrimSpace(*light.DeviceID) == "" ||
