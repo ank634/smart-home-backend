@@ -35,7 +35,6 @@ func main() {
 
 	//////////////////////// HANDLERS //////////////////////////
 	// NOTE: DON'T use patch request hangs
-	http.HandleFunc("POST /iot-devices", devicesCrud.AddDeviceHandler(db))
 	http.HandleFunc("POST /iot-devices/{id}", devicesCrud.EditDeviceHandler(db))
 	http.HandleFunc("DELETE /iot-devices/{id}", devicesCrud.DeleteDeviceHandler(db))
 	http.HandleFunc("GET /iot-devices", devicesCrud.GetDeviceHandler(db))

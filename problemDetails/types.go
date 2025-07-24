@@ -14,3 +14,5 @@ type ProblemDetail struct {
 	Status    int
 	Detail    string
 }
+
+// TODO add a function that just writes the content of a problem detail to the client similar to http error

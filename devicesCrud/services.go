@@ -66,24 +66,6 @@ func AddLightDevice(db *sql.DB, light LightDevice) error {
 	return err
 }
 
-// AddDevice adds a iot device to our home automation system
-// todo add mdns device check maybe a ping
-// todo maybe pass values or interface instead of struct
-func AddDevice(db *sql.DB, device SmartHomeDevice) error {
-	query := "INSERT INTO device VALUES ($1, $2, $3, $4, $5, $6, $7)"
-
-	// this executes the db query should not really be used with select
-	// use only if the database operation return no operation
-	// TODO: decide if I should check for existing value and how to get this to the user
-	// or leave that as an error
-	_, err := db.Exec(query, device.DeviceID, device.DeviceName,
-		device.DeviceType, device.ServiceType,
-		device.SetTopic, device.GetTopic,
-		device.DeviceUrl)
-
-	return err
-}
-
 // todo add mdns device check maybe a ping
 // todo maybe pass values or interface instead of struct
 func DeleteDevice(db *sql.DB, device SmartHomeDevicePatch) (bool, error) {
