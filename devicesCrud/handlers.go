@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	problemdetails "smart-home-backend/problemDetails"
 	"strings"
 
 	"github.com/lib/pq"
@@ -22,17 +23,14 @@ func AddLightDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Req
 		encoder := json.NewEncoder(w)
 
 		if err != nil {
-			httpProblemDetails := ProblemDetail{err.Error(), "title", 400, "detail"}
-			// header must be called before encode because w.write makes header 200 and encode calls w.write
-			w.Header().Set("Content-Type", "application/problem+json")
-			w.WriteHeader(http.StatusBadRequest)
-			encoder.Encode(httpProblemDetails)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(500)
 			return
 		}
 
 		err = AddLightDeviceValidator(newLightDevice)
 		if err != nil {
-			httpProblemDetails := ProblemDetail{err.Error(), "title", 400, "detail"}
+			httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.ILLEGAL_VALUE_ERROR, Title: "title", Status: 400, Detail: "detail"}
 			// header must be called before encode because w.write makes header 200 and encode calls w.write
 			w.Header().Set("Content-Type", "application/problem+json")
 			w.WriteHeader(http.StatusBadRequest)
@@ -45,7 +43,7 @@ func AddLightDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Req
 			var notNullErr ErrorNotNullViolation
 			if errors.As(err, &notNullErr) {
 				w.WriteHeader(http.StatusBadRequest)
-				httpProblemDetails := ProblemDetail{err.Error(), "No not null allowed", 400, "No not null allowed"}
+				httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.NULL_NOT_ALLOWED_ERROR, Title: "No not null allowed", Status: 400, Detail: "No not null allowed"}
 				w.Header().Set("Content-Type", "application/problem+json")
 				encoder.Encode(httpProblemDetails)
 				return
@@ -53,7 +51,7 @@ func AddLightDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Req
 			var illegalDataError ErrorIllegalData
 			if errors.As(err, &illegalDataError) {
 				w.WriteHeader(http.StatusBadRequest)
-				httpProblemDetails := ProblemDetail{err.Error(), "No empty strings", 400, "No empty strings"}
+				httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.ILLEGAL_VALUE_ERROR, Title: "No empty strings", Status: 400, Detail: "No empty strings"}
 				w.Header().Set("Content-Type", "application/problem+json")
 				encoder.Encode(httpProblemDetails)
 				return
@@ -61,7 +59,7 @@ func AddLightDeviceHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Req
 			var notUniqueError ErrorDuplicateData
 			if errors.As(err, &notUniqueError) {
 				w.WriteHeader(http.StatusBadRequest)
-				httpProblemDetails := ProblemDetail{err.Error(), "Values must me unique", 400, "Values must me unique"}
+				httpProblemDetails := problemdetails.ProblemDetail{ErrorType: problemdetails.NULL_NOT_ALLOWED_ERROR, Title: "Values must me unique", Status: 400, Detail: "Values must me unique"}
 				w.Header().Set("Content-Type", "application/problem+json")
 				encoder.Encode(httpProblemDetails)
 				return

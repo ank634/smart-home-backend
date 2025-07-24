@@ -93,10 +93,3 @@ type SmartHomeDevicePatch struct {
 	DeviceID   string
 	DeviceName string
 }
-
-type ProblemDetail struct {
-	ErrorType string
-	Title     string
-	Status    int
-	Detail    string
-}
