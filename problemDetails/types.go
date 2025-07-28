@@ -1,5 +1,10 @@
 package problemdetails
 
+import (
+	"encoding/json"
+	"net/http"
+)
+
 type problemDetailError string
 
 const (
@@ -8,11 +13,15 @@ const (
 	ILLEGAL_VALUE_ERROR    problemDetailError = "ILLEGAL_VALUE"
 )
 
-type ProblemDetail struct {
+type problemDetail struct {
 	ErrorType problemDetailError
 	Title     string
 	Status    int
 	Detail    string
 }
 
-// TODO add a function that just writes the content of a problem detail to the client similar to http error
+func ProblemDetail(w http.ResponseWriter, errorType problemDetailError, title string, statusCode int, detail string) {
+	w.WriteHeader(http.StatusBadRequest)
+	w.Header().Set("Content-Type", "application/problem+json")
+	json.NewEncoder(w).Encode(problemDetail{ErrorType: errorType, Title: title, Status: statusCode, Detail: detail})
+}
