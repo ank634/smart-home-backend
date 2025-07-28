@@ -40,6 +40,8 @@ func main() {
 	http.HandleFunc("GET /iot-devices", devicesCrud.GetDeviceHandler(db))
 	http.HandleFunc("POST /iot-devices", devicesCrud.AddDevice(db))
 
+	http.HandleFunc("POST /rooms", devicesCrud.AddRoomHandler(db))
+
 	// listen and serv on port 8080
 	// uses default standard lib router for
 	err = http.ListenAndServe(":8080", nil)

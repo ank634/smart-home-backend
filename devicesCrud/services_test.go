@@ -227,6 +227,38 @@ func (suite *ServicesTestSuite) TestFetchAllLights() {
 	assert.Equal(suite.T(), 2, len(lights))
 }
 
+func (suite *ServicesTestSuite) TestRoomAddEmptyDb() {
+	roomName := "myroom"
+	err := AddRoom(suite.db, roomName)
+	assert.Equal(suite.T(), nil, err)
+
+	tableItems, err := getNumberOfItemsFromTable(suite.db, "room")
+	assert.Equal(suite.T(), nil, err)
+	assert.Equal(suite.T(), 1, tableItems)
+
+}
+
+func (suite *ServicesTestSuite) TestRoomAddDuplicate() {
+	roomName := "myroom"
+	AddRoom(suite.db, roomName)
+	err := AddRoom(suite.db, roomName)
+	var duplicateError ErrorDuplicateData
+	assert.ErrorAs(suite.T(), err, &duplicateError)
+	tableItems, err := getNumberOfItemsFromTable(suite.db, "room")
+	assert.Equal(suite.T(), nil, err)
+	assert.Equal(suite.T(), 1, tableItems)
+}
+
+func (suite *ServicesTestSuite) TestAddIllegalValues() {
+	roomName := ""
+	err := AddRoom(suite.db, roomName)
+	var illegalDataError ErrorIllegalData
+	assert.ErrorAs(suite.T(), err, &illegalDataError)
+	tableItems, err := getNumberOfItemsFromTable(suite.db, "room")
+	assert.Equal(suite.T(), nil, err)
+	assert.Equal(suite.T(), 0, tableItems)
+}
+
 // This is what runs the actual test in the suite
 func TestServicesTestSuite(t *testing.T) {
 	suite.Run(t, new(ServicesTestSuite))

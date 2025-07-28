@@ -197,3 +197,44 @@ func GetDevicesByServiceType(db *sql.DB, serviceType string) ([]SmartHomeDevice,
 	}
 	return devices, nil
 }
+
+func AddRoom(db *sql.DB, roomName string) error {
+	stmt := "INSERT INTO ROOM(name) VALUES($1)"
+	txn, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = txn.Exec(stmt, roomName)
+	if err != nil {
+		txn.Rollback()
+		err, ok := err.(*pq.Error)
+		if !ok {
+			return err
+		}
+		if err.Code == "23502" {
+			return ErrorNotNullViolation{"This value may not be null"}
+		}
+		if err.Code == "23505" {
+			return ErrorDuplicateData{"This value is not unique"}
+		}
+		if err.Code == "23514" {
+			return ErrorIllegalData{"Data value not allowed"}
+		}
+		return err
+	}
+	err = txn.Commit()
+	return err
+
+}
+
+func EditRoom(db *sql.DB, room Room) error {
+	return nil
+}
+
+func DeletRoom(db *sql.DB, roomId int) error {
+	return nil
+}
+
+func GetRooms(db *sql.DB) ([]Room, error) {
+	return nil, nil
+}

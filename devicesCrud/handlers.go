@@ -233,3 +233,46 @@ func AddDeviceValidator(device SmartHomeDevice) error {
 	}
 	return nil
 }
+
+func AddRoomHandler(db *sql.DB) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		defer req.Body.Close()
+		var room Room
+		err := json.NewDecoder(req.Body).Decode(&room)
+		if err != nil {
+			http.Error(w, "internal server error", 500)
+		}
+		if room.RoomName == nil {
+			problemdetails.ProblemDetail(w, problemdetails.NULL_NOT_ALLOWED_ERROR, "Null not allowed", http.StatusBadRequest, "Null not allowed")
+			return
+		}
+		if strings.TrimSpace(*room.RoomName) == "" {
+			problemdetails.ProblemDetail(w, problemdetails.ILLEGAL_VALUE_ERROR, "Value not allowed", http.StatusBadRequest, "Value not allowed")
+			return
+		}
+
+		err = AddRoom(db, *room.RoomName)
+		if err != nil {
+			var notNullErr ErrorNotNullViolation
+			if errors.As(err, &notNullErr) {
+				problemdetails.ProblemDetail(w, problemdetails.NULL_NOT_ALLOWED_ERROR, "Null not allowed", http.StatusBadRequest, "Null not allowed")
+				return
+			}
+			var illegalDataError ErrorIllegalData
+			if errors.As(err, &illegalDataError) {
+				problemdetails.ProblemDetail(w, problemdetails.ILLEGAL_VALUE_ERROR, "Value not allowed", http.StatusBadRequest, "Value not allowed")
+				return
+			}
+			var notUniqueError ErrorDuplicateData
+			if errors.As(err, &notUniqueError) {
+				problemdetails.ProblemDetail(w, problemdetails.NOT_UNIQUE_ERROR, "non unique value not allowed", http.StatusBadRequest, "non unique value not allowed")
+				return
+
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusOK)
+	}
+}

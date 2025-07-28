@@ -93,3 +93,8 @@ func EqualLightDevices(a, b *LightDevice) bool {
 type SmartHomeDevicePatch struct {
 	DeviceName string
 }
+
+type Room struct {
+	RoomId   *int
+	RoomName *string
+}

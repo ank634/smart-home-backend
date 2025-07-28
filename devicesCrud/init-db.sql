@@ -1,6 +1,7 @@
 create table IF NOT EXISTS Room(
 	id Serial Primary KEY,
 	name TEXT NOT NULL UNIQUE
+	CHECK(TRIM(name) <> '')
 );
 
 create type device_type as ENUM ('light');
