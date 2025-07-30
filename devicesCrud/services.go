@@ -227,14 +227,74 @@ func AddRoom(db *sql.DB, roomName string) error {
 
 }
 
-func EditRoom(db *sql.DB, room Room) error {
-	return nil
+func EditRoom(db *sql.DB, room Room) (bool, error) {
+	stmt := "UPDATE ROOM SET NAME = $1 WHERE id = $2"
+	txn, err := db.Begin()
+	if err != nil {
+		return false, err
+	}
+	res, err := txn.Exec(stmt, room.RoomName, room.RoomId)
+	if err != nil {
+		txn.Rollback()
+		err, ok := err.(*pq.Error)
+		if !ok {
+			return false, err
+		}
+		if err.Code == "23502" {
+			return false, ErrorNotNullViolation{"This value may not be null"}
+		}
+		if err.Code == "23505" {
+			return false, ErrorDuplicateData{"This value is not unique"}
+		}
+		if err.Code == "23514" {
+			return false, ErrorIllegalData{"Data value not allowed"}
+		}
+		return false, err
+	}
+	err = txn.Commit()
+	if err != nil {
+		return false, err
+	}
+
+	rowsEffected, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rowsEffected > 0, nil
 }
 
-func DeletRoom(db *sql.DB, roomId int) error {
-	return nil
+func DeleteRoom(db *sql.DB, roomId int) (bool, error) {
+	stmt := "DELETE FROM ROOM WHERE id = $1"
+	res, err := db.Exec(stmt, roomId)
+	if err != nil {
+		return false, err
+	}
+
+	rowsEffected, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rowsEffected > 0, nil
 }
 
 func GetRooms(db *sql.DB) ([]Room, error) {
-	return nil, nil
+	stmt := "SELECT * FROM ROOM"
+	rows, err := db.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+
+	var rooms []Room
+	var tempRoom Room
+	defer rows.Close()
+	for rows.Next() {
+		err = rows.Scan(&tempRoom.RoomId, &tempRoom.RoomName)
+		if err != nil {
+			return nil, err
+		}
+		rooms = append(rooms, tempRoom)
+	}
+	return rooms, nil
 }

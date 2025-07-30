@@ -249,7 +249,7 @@ func (suite *ServicesTestSuite) TestRoomAddDuplicate() {
 	assert.Equal(suite.T(), 1, tableItems)
 }
 
-func (suite *ServicesTestSuite) TestAddIllegalValues() {
+func (suite *ServicesTestSuite) TestRoomAddIllegalValues() {
 	roomName := ""
 	err := AddRoom(suite.db, roomName)
 	var illegalDataError ErrorIllegalData
@@ -257,6 +257,43 @@ func (suite *ServicesTestSuite) TestAddIllegalValues() {
 	tableItems, err := getNumberOfItemsFromTable(suite.db, "room")
 	assert.Equal(suite.T(), nil, err)
 	assert.Equal(suite.T(), 0, tableItems)
+}
+
+func (suite *ServicesTestSuite) TestGetRooms() {
+	rooms, err := GetRooms(suite.db)
+	assert.Equal(suite.T(), nil, err)
+	assert.Equal(suite.T(), len(rooms), 0)
+
+	roomName := "my room"
+	expectedRoomId := 1
+	AddRoom(suite.db, roomName)
+	rooms, err = GetRooms(suite.db)
+	assert.Equal(suite.T(), nil, err)
+	assert.Equal(suite.T(), len(rooms), 1)
+	assert.Equal(suite.T(), expectedRoomId, *rooms[0].RoomId)
+	assert.Equal(suite.T(), roomName, *rooms[0].RoomName)
+}
+
+func (suite *ServicesTestSuite) TestDeleteRoom() {
+	roomName := "my room"
+	expectedRoomId := 1
+	AddRoom(suite.db, roomName)
+	roomDeleted, err := DeleteRoom(suite.db, expectedRoomId)
+	assert.Equal(suite.T(), nil, err)
+	assert.Equal(suite.T(), true, roomDeleted)
+	numRooms, err := getNumberOfItemsFromTable(suite.db, "room")
+	assert.Equal(suite.T(), nil, err)
+	assert.Equal(suite.T(), 0, numRooms)
+
+	roomName = "my room"
+	expectedRoomId = 1
+	AddRoom(suite.db, roomName)
+	roomDeleted, err = DeleteRoom(suite.db, 0)
+	assert.Equal(suite.T(), nil, err)
+	assert.Equal(suite.T(), false, roomDeleted)
+	numRooms, err = getNumberOfItemsFromTable(suite.db, "room")
+	assert.Equal(suite.T(), nil, err)
+	assert.Equal(suite.T(), 1, numRooms)
 }
 
 // This is what runs the actual test in the suite
