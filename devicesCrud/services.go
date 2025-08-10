@@ -148,27 +148,16 @@ func EditDevice(db *sql.DB, deviceId string, device SmartHomeDevicePatch) (bool,
 	return rowsAffected > 0, nil
 }
 
-func GetAllDevices(db *sql.DB) ([]SmartHomeDevice, error) {
-	query := "SELECT * FROM device"
-	rows, err := db.Query(query)
+func GetAllDevices(db *sql.DB) ([]any, error) {
+	lights, err := GetAllLightDevices(db)
 	if err != nil {
 		return nil, err
 	}
-	// if you only do var devices []SmartHomeDevice it init to nil
-	// this init to empty array
-	var devices []SmartHomeDevice = []SmartHomeDevice{}
-	defer rows.Close()
-	for rows.Next() {
-		var tempDevice SmartHomeDevice
-		err = rows.Scan(&tempDevice.DeviceID, &tempDevice.DeviceName,
-			&tempDevice.DeviceType, &tempDevice.ServiceType,
-			&tempDevice.SetTopic, &tempDevice.GetTopic,
-			&tempDevice.EndPoint)
 
-		if err != nil {
-			return nil, err
-		}
-		devices = append(devices, tempDevice)
+	var devices []any = []any{}
+
+	for _, light := range lights {
+		devices = append(devices, light)
 	}
 	return devices, nil
 }
